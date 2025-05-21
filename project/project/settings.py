@@ -139,7 +139,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-
+# настройки rest api
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.TokenAuthentication',
@@ -158,6 +158,7 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 20,
 }
 
+# JWT авторизация api
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
@@ -165,8 +166,9 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,
 }
 
+# корсы
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:3000',  # For frontend
+    'http://localhost:3000',  
     'http://127.0.0.1:3000',
 ]
 

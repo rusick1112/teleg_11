@@ -139,7 +139,6 @@ class FavoriteSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'user', 'added_at']
     
     def create(self, validated_data):
-        # Automatically set the user from the request
         validated_data['user'] = self.context['request'].user
         return super().create(validated_data)
 

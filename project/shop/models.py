@@ -5,7 +5,7 @@ from django.utils.translation import gettext_lazy as _
 
 
 class CustomerProfile(models.Model):
-    """Proxy model for extending the User model with additional information"""
+    """Прокси модель для информации о пользователе"""
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     address = models.TextField(blank=True, null=True)
@@ -15,7 +15,7 @@ class CustomerProfile(models.Model):
 
 
 class Category(models.Model):
-    """Category model for organizing products"""
+    """Категория мальчики, девочки, унисекс"""
     GENDER_CHOICES = (
         ('B', 'Boys'),
         ('G', 'Girls'),
@@ -42,15 +42,15 @@ class Category(models.Model):
 
 
 class Product(models.Model):
-    """Main product model for clothing items"""
+    """Основная модель для товаров"""
     title = models.CharField(max_length=255)
     slug = models.SlugField(unique=True)
-    article = models.CharField(max_length=50, unique=True, help_text="Unique product identifier/code")
+    article = models.CharField(max_length=50, unique=True, help_text="Уникальный артикул товара")
     price = models.DecimalField(max_digits=10, decimal_places=2)
     sale_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     categories = models.ManyToManyField(Category, related_name='products')
     description = models.TextField()
-    composition = models.CharField(max_length=255, blank=True, help_text="E.g. Cotton 95%, Elastane 5%")
+    composition = models.CharField(max_length=255, blank=True, help_text="Состав: Хлопок 95%, Полиестр 5%")
     is_available = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -68,7 +68,7 @@ class Product(models.Model):
     
     @property
     def main_image(self):
-        """Return the first image for this product"""
+        """Первое изображение товара"""
         product_variant = self.variants.first()
         if product_variant and product_variant.images.exists():
             return product_variant.images.first()
@@ -76,22 +76,22 @@ class Product(models.Model):
     
     @property
     def available_colors(self):
-        """Return a list of all available colors for this product"""
+        """Список цветов товара"""
         return list(self.variants.values_list('color', flat=True).distinct())
 
 
 class Color(models.Model):
-    """Color options for products"""
+    """Варианты цветов"""
     name = models.CharField(max_length=50)
-    code = models.CharField(max_length=20, help_text="Color code (e.g., HEX #FFFFFF)")
+    code = models.CharField(max_length=20, help_text="Цвет")
     
     def __str__(self):
         return self.name
 
 
 class Size(models.Model):
-    """Size options for products"""
-    name = models.CharField(max_length=20)  # XS, S, M, L, XL or numeric sizes like 110, 116, etc.
+    """Варианты размеров"""
+    name = models.CharField(max_length=20)  # XS, S, M, L, XL
     display_order = models.PositiveSmallIntegerField(default=0)
     
     class Meta:
@@ -102,11 +102,11 @@ class Size(models.Model):
 
 
 class ProductVariant(models.Model):
-    """Variant of a product with specific color and available sizes"""
+    """Варианты товаров определённых цветов, их доступность"""
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='variants')
     color = models.ForeignKey(Color, on_delete=models.CASCADE)
     sizes = models.ManyToManyField(Size, through='ProductStock')
-    is_default = models.BooleanField(default=False, help_text="Is this the default variant shown for the product")
+    is_default = models.BooleanField(default=False, help_text="Это основной вариант товара?")
     
     class Meta:
         unique_together = [['product', 'color']]
@@ -116,8 +116,8 @@ class ProductVariant(models.Model):
 
 
 class ProductImage(models.Model):
-    """Images for product variants"""
-    variant = models.ForeignKey(ProductVariant, on_delete=models.CASCADE, related_name='images')
+    """Изображение для конкрентого товара"""
+    variant = models.ForeignKey(ProductVariant, on_delete=models.CASCADE, related_name='изображения')
     image = models.ImageField(upload_to='products')
     alt_text = models.CharField(max_length=255, blank=True)
     sort_order = models.PositiveIntegerField(default=0)
@@ -126,11 +126,11 @@ class ProductImage(models.Model):
         ordering = ['sort_order']
     
     def __str__(self):
-        return f"Image for {self.variant}"
+        return f"Изображение для {self.variant}"
 
 
 class ProductStock(models.Model):
-    """Stock keeping unit for each product variant and size combination"""
+    """Единица учёта товаров"""
     variant = models.ForeignKey(ProductVariant, on_delete=models.CASCADE, related_name='stocks')
     size = models.ForeignKey(Size, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=0)
@@ -143,9 +143,9 @@ class ProductStock(models.Model):
 
 
 class Favorite(models.Model):
-    """User favorites"""
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorites')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='favorited_by')
+    """Любимые товары"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='любимые товары')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='товар')
     added_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
@@ -156,14 +156,14 @@ class Favorite(models.Model):
 
 
 class Cart(models.Model):
-    """Shopping cart model"""
+    """Корзина"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cart', null=True, blank=True)
-    session_id = models.CharField(max_length=255, null=True, blank=True)  # For anonymous users
+    session_id = models.CharField(max_length=255, null=True, blank=True)  # Для не зарегистрированных пользователей
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):
-        return f"Cart {self.id} - {'User: ' + self.user.username if self.user else 'Anonymous'}"
+        return f"Корзина {self.id} - {'Пользователь: ' + self.user.username if self.user else 'Анонимный'}"
     
     @property
     def total_price(self):
@@ -171,8 +171,8 @@ class Cart(models.Model):
 
 
 class CartItem(models.Model):
-    """Individual items in a cart"""
-    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
+    """Товары в корзине"""
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='товары')
     product_stock = models.ForeignKey(ProductStock, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
     added_at = models.DateTimeField(auto_now_add=True)
@@ -193,32 +193,32 @@ class CartItem(models.Model):
 
 
 class Order(models.Model):
-    """Order model to track completed purchases"""
+    """Таблица для заказов и отслеживания доставки"""
     STATUS_CHOICES = (
-        ('pending', _('Pending')),
-        ('processing', _('Processing')),
-        ('shipped', _('Shipped')),
-        ('delivered', _('Delivered')),
-        ('cancelled', _('Cancelled')),
+        ('pending', _('Создано')),
+        ('processing', _('В процессе')),
+        ('shipped', _('Отправленно')),
+        ('delivered', _('Доставлено')),
+        ('cancelled', _('Отменено')),
     )
     
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='orders', null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='заказы', null=True, blank=True)
     full_name = models.CharField(max_length=255)
     email = models.EmailField()
     phone = models.CharField(max_length=20)
     address = models.TextField()
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='создано')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):
-        return f"Order {self.id} - {self.full_name}"
+        return f"Заказ {self.id} - {self.full_name}"
 
 
 class OrderItem(models.Model):
-    """Individual items in an order"""
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
+    """Товары в заказе"""
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='товары')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     variant = models.ForeignKey(ProductVariant, on_delete=models.CASCADE)
     size = models.ForeignKey(Size, on_delete=models.CASCADE)
