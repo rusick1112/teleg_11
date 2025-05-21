@@ -23,7 +23,7 @@ class CustomerProfileViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     
     def get_queryset(self):
-        # Users can only see their own profile
+        # Получение только своего профиля
         return CustomerProfile.objects.filter(user=self.request.user)
 
 
@@ -36,14 +36,14 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     
     @action(detail=False, methods=['get'])
     def boys(self, request):
-        """Get all boys categories"""
+        """Все категории товаров для мальчиков"""
         categories = Category.objects.filter(Q(gender='B') | Q(gender='U'))
         serializer = self.get_serializer(categories, many=True)
         return Response(serializer.data)
     
     @action(detail=False, methods=['get'])
     def girls(self, request):
-        """Get all girls categories"""
+        """Все категории товаров для девочек"""
         categories = Category.objects.filter(Q(gender='G') | Q(gender='U'))
         serializer = self.get_serializer(categories, many=True)
         return Response(serializer.data)
@@ -64,7 +64,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     
     @action(detail=False, methods=['get'])
     def boys(self, request):
-        """Get all boys products"""
+        """Фильтр для товаров для мальчиков"""
         boy_categories = Category.objects.filter(Q(gender='B') | Q(gender='U'))
         products = Product.objects.filter(categories__in=boy_categories, is_available=True).distinct()
         
@@ -78,7 +78,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     
     @action(detail=False, methods=['get'])
     def girls(self, request):
-        """Get all girls products"""
+        """Фильтр для товаров для девочек"""
         girl_categories = Category.objects.filter(Q(gender='G') | Q(gender='U'))
         products = Product.objects.filter(categories__in=girl_categories, is_available=True).distinct()
         
@@ -120,7 +120,7 @@ class FavoriteViewSet(viewsets.ModelViewSet):
         product_id = request.data.get('product_id')
         if not product_id:
             return Response(
-                {'error': 'Product ID is required'}, 
+                {'error': 'Нужен id товара'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
@@ -129,10 +129,10 @@ class FavoriteViewSet(viewsets.ModelViewSet):
         
         if favorite:
             favorite.delete()
-            return Response({'status': 'removed'}, status=status.HTTP_200_OK)
+            return Response({'status': 'удалён'}, status=status.HTTP_200_OK)
         else:
             Favorite.objects.create(user=request.user, product=product)
-            return Response({'status': 'added'}, status=status.HTTP_201_CREATED)
+            return Response({'status': 'добавлен'}, status=status.HTTP_201_CREATED)
 
 
 class CartViewSet(viewsets.ModelViewSet):
@@ -154,7 +154,7 @@ class CartViewSet(viewsets.ModelViewSet):
         cart = queryset.first()
         
         if not cart:
-            # Create a new cart
+            # Создание новой корзины
             if self.request.user.is_authenticated:
                 cart = Cart.objects.create(user=self.request.user)
             else:
@@ -171,45 +171,45 @@ class CartViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['post'])
     def merge(self, request):
-        """Merge anonymous cart with user cart after login"""
+        """Сохранение корзины анонимного пользователя после авторизации"""
         if not request.user.is_authenticated:
             return Response(
-                {'error': 'You must be logged in to merge carts'}, 
+                {'error': 'Вы должны быть зарегестрированы'}, 
                 status=status.HTTP_401_UNAUTHORIZED
             )
         
         session_id = request.session.session_key
         if not session_id:
-            return Response({'message': 'No anonymous cart to merge'})
+            return Response({'message': 'Нет добавленных товаров'})
         
-        # Find anonymous cart
+        # Поиск товаров в корзине до регистрации
         anonymous_cart = Cart.objects.filter(session_id=session_id).first()
         if not anonymous_cart or not anonymous_cart.items.exists():
-            return Response({'message': 'No anonymous cart to merge'})
+            return Response({'message': 'Нет добавленных товаров'})
         
-        # Find or create user cart
+        # Поиск/создание корзины
         user_cart, created = Cart.objects.get_or_create(user=request.user)
         
-        # Move items from anonymous cart to user cart
+        # Сохранение корзины анонимного пользователя после авторизации
         for anon_item in anonymous_cart.items.all():
-            # Check if this item already exists in user cart
+            # Проверка товара на сущестовавание товара в корзине
             user_item = user_cart.items.filter(
                 product_stock=anon_item.product_stock
             ).first()
             
             if user_item:
-                # Update quantity
+                # Увелечение количества товаров
                 user_item.quantity += anon_item.quantity
                 user_item.save()
             else:
-                # Move item to user cart
+                # Добавление товара в корзину
                 anon_item.cart = user_cart
                 anon_item.save()
         
-        # Delete anonymous cart
+        # Удаление корзины не зарегистрированного пользователя
         anonymous_cart.delete()
         
-        # Return updated user cart
+        # Обновление корзины пользователя
         serializer = self.get_serializer(user_cart)
         return Response(serializer.data)
 
@@ -237,13 +237,13 @@ class CartItemViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         cart = self.get_cart()
         
-        # Add cart info to request data
+        # Добавить информацию о корзине для запроса 
         mutable_data = request.data.copy()
         
         serializer = self.get_serializer(data=mutable_data)
         serializer.is_valid(raise_exception=True)
         
-        # Check if item already exists in cart
+        # Проверка существует ли товар в корзине
         product_stock_id = serializer.validated_data['product_stock'].id
         existing_item = CartItem.objects.filter(
             cart=cart, 
@@ -251,7 +251,7 @@ class CartItemViewSet(viewsets.ModelViewSet):
         ).first()
         
         if existing_item:
-            # Update quantity
+            # Увеличеть количество
             existing_item.quantity += serializer.validated_data.get('quantity', 1)
             existing_item.save()
             response_serializer = self.get_serializer(existing_item)
@@ -276,7 +276,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         return Order.objects.filter(user=self.request.user)
     
     def create(self, request, *args, **kwargs):
-        # Get current cart
+        # Получение текущей корзины
         try:
             cart = Cart.objects.get(user=request.user)
         except Cart.DoesNotExist:
@@ -291,7 +291,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Create order
+        # Создание заказа
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         order = serializer.save(
@@ -299,7 +299,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             total_price=cart.total_price
         )
         
-        # Create order items from cart items
+        # Создание товаров в заказе из корзины
         for cart_item in cart.items.all():
             product_stock = cart_item.product_stock
             product = product_stock.variant.product
@@ -307,7 +307,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             size = product_stock.size
             price = product.sale_price if product.sale_price else product.price
             
-            # Create order item
+            # Создание товаров в заказе
             order.items.create(
                 product=product,
                 variant=variant,
@@ -316,7 +316,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 quantity=cart_item.quantity
             )
         
-        # Clear cart
+        # Очистка корзины
         cart.items.all().delete()
         
         return Response(
