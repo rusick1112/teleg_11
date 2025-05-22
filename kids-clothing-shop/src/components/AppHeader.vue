@@ -17,6 +17,13 @@
           </svg>
         </button>
         
+        <button class="action-button" @click="handleUserIconClick">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="user-icon">
+            <circle cx="12" cy="8" r="5"/>
+            <path d="M20 21a8 8 0 1 0-16 0"/>
+          </svg>
+        </button>
+        
         <router-link to="/favorites" class="action-button">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="heart-icon">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"></path>
@@ -69,29 +76,37 @@
       </div>
     </div>
     
-    <div class="mobile-menu" v-if="menuOpen">
-      <div class="mobile-menu-header">
+    <div class="menu-overlay" v-if="menuOpen" @click="toggleMenu"></div>
+    <div class="side-menu" :class="{ 'open': menuOpen }">
+      <div class="side-menu-header">
         <button class="close-button" @click="toggleMenu">×</button>
       </div>
-      <nav class="mobile-nav">
-        <router-link to="/categories/girls" class="mobile-nav-item">ДЕВОЧКИ</router-link>
-        <router-link to="/categories/boys" class="mobile-nav-item">МАЛЬЧИКИ</router-link>
-        <router-link to="/new-arrivals" class="mobile-nav-item">НОВИНКИ</router-link>
-        <router-link to="/sale" class="mobile-nav-item">РАСПРОДАЖА</router-link>
-        <router-link to="/about" class="mobile-nav-item">О НАС</router-link>
-        <router-link to="/delivery" class="mobile-nav-item">ДОСТАВКА</router-link>
+      <nav class="side-nav">
+        <router-link to="/categories/girls" class="side-nav-item" @click="toggleMenu">ДЕВОЧКИ</router-link>
+        <router-link to="/categories/boys" class="side-nav-item" @click="toggleMenu">МАЛЬЧИКИ</router-link>
+        <router-link to="/new-arrivals" class="side-nav-item" @click="toggleMenu">НОВИНКИ</router-link>
+        <router-link to="/sale" class="side-nav-item" @click="toggleMenu">РАСПРОДАЖА</router-link>
+        <router-link to="/about" class="side-nav-item" @click="toggleMenu">О НАС</router-link>
+        <router-link to="/delivery" class="side-nav-item" @click="toggleMenu">ДОСТАВКА</router-link>
       </nav>
     </div>
+    
+    <!-- Login Modal -->
+    <LoginModal :is-open="loginModalOpen" @close="closeLoginModal" />
   </header>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/stores/authStore';
+import LoginModal from '@/components/LoginModal.vue';
 
 const router = useRouter();
+const authStore = useAuthStore();
 const menuOpen = ref(false);
 const searchOpen = ref(false);
+const loginModalOpen = ref(false);
 const searchQuery = ref('');
 const scrolled = ref(false);
 const activeCategory = ref('girls'); // Default to girls category
@@ -102,6 +117,13 @@ const toggleMenu = () => {
   if (menuOpen.value && searchOpen.value) {
     searchOpen.value = false;
   }
+  
+  // Prevent scrolling when menu is open
+  if (menuOpen.value) {
+    document.body.style.overflow = 'hidden';
+  } else {
+    document.body.style.overflow = '';
+  }
 };
 
 const toggleSearch = () => {
@@ -109,6 +131,7 @@ const toggleSearch = () => {
   // Close menu if it's open
   if (searchOpen.value && menuOpen.value) {
     menuOpen.value = false;
+    document.body.style.overflow = '';
   }
 };
 
@@ -124,12 +147,42 @@ const setActiveCategory = (category) => {
   activeCategory.value = category;
 };
 
+const handleUserIconClick = () => {
+  if (authStore.isAuthenticated) {
+    // Redirect to account page if user is authenticated
+    router.push('/account');
+  } else {
+    // Open login modal if user is not authenticated
+    loginModalOpen.value = true;
+  }
+};
+
+const closeLoginModal = () => {
+  loginModalOpen.value = false;
+};
+
 const handleScroll = () => {
   scrolled.value = window.scrollY > 10;
 };
 
-onMounted(() => {
+// Close menu when escape key is pressed
+const handleKeydown = (event) => {
+  if (event.key === 'Escape') {
+    if (menuOpen.value) {
+      toggleMenu();
+    } else if (searchOpen.value) {
+      toggleSearch();
+    }
+  }
+};
+
+onMounted(async () => {
   window.addEventListener('scroll', handleScroll);
+  window.addEventListener('keydown', handleKeydown);
+  
+  // Initialize authentication state
+  await authStore.initializeAuth();
+  
   // Set active category based on current route
   const path = router.currentRoute.value.path;
   if (path.includes('/categories/girls')) {
@@ -141,6 +194,8 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll);
+  window.removeEventListener('keydown', handleKeydown);
+  document.body.style.overflow = '';
 });
 </script>
 
@@ -230,6 +285,7 @@ onUnmounted(() => {
 }
 
 .search-icon,
+.user-icon,
 .heart-icon,
 .cart-icon {
   width: 24px;
@@ -300,21 +356,42 @@ onUnmounted(() => {
   cursor: pointer;
 }
 
-.mobile-menu {
+/* Menu overlay and side menu */
+.menu-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: #fff;
+  background-color: rgba(0, 0, 0, 0.5);
   z-index: 1001;
-  overflow-y: auto;
+  backdrop-filter: blur(3px);
 }
 
-.mobile-menu-header {
+.side-menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 300px;
+  max-width: 80%;
+  height: 100%;
+  background-color: #fff;
+  z-index: 1002;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  overflow-y: auto;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.side-menu.open {
+  transform: translateX(0);
+}
+
+.side-menu-header {
   display: flex;
   justify-content: flex-end;
   padding: 1rem;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .close-button {
@@ -325,19 +402,24 @@ onUnmounted(() => {
   cursor: pointer;
 }
 
-.mobile-nav {
+.side-nav {
   display: flex;
   flex-direction: column;
-  padding: 1rem;
+  padding: 1rem 0;
 }
 
-.mobile-nav-item {
+.side-nav-item {
   padding: 1rem;
   border-bottom: 1px solid #e0e0e0;
   text-decoration: none;
   color: #000;
   font-weight: 500;
   text-transform: uppercase;
+  transition: background-color 0.2s ease;
+}
+
+.side-nav-item:hover {
+  background-color: #f5f5f5;
 }
 
 /* Responsive adjustments */
@@ -353,19 +435,19 @@ onUnmounted(() => {
   .category-button {
     font-size: 1rem;
   }
+  
+  .side-menu {
+    width: 350px;
+  }
 }
 
 @media (min-width: 1024px) {
-  .menu-button {
-    display: none;
-  }
-  
-  .mobile-menu {
-    display: none;
-  }
-  
   .category-button {
     padding: 15px 30px;
+  }
+  
+  .side-menu {
+    width: 400px;
   }
 }
 </style>

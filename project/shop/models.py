@@ -117,7 +117,7 @@ class ProductVariant(models.Model):
 
 class ProductImage(models.Model):
     """Изображение для конкрентого товара"""
-    variant = models.ForeignKey(ProductVariant, on_delete=models.CASCADE, related_name='изображения')
+    variant = models.ForeignKey(ProductVariant, on_delete=models.CASCADE, related_name='images')
     image = models.ImageField(upload_to='products')
     alt_text = models.CharField(max_length=255, blank=True)
     sort_order = models.PositiveIntegerField(default=0)
@@ -144,8 +144,8 @@ class ProductStock(models.Model):
 
 class Favorite(models.Model):
     """Любимые товары"""
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='любимые товары')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='товар')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorites')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='favorited_by')
     added_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
@@ -172,7 +172,7 @@ class Cart(models.Model):
 
 class CartItem(models.Model):
     """Товары в корзине"""
-    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='товары')
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
     product_stock = models.ForeignKey(ProductStock, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
     added_at = models.DateTimeField(auto_now_add=True)
@@ -202,7 +202,7 @@ class Order(models.Model):
         ('cancelled', _('Отменено')),
     )
     
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='заказы', null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='orders', null=True, blank=True)
     full_name = models.CharField(max_length=255)
     email = models.EmailField()
     phone = models.CharField(max_length=20)
@@ -218,7 +218,7 @@ class Order(models.Model):
 
 class OrderItem(models.Model):
     """Товары в заказе"""
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='товары')
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     variant = models.ForeignKey(ProductVariant, on_delete=models.CASCADE)
     size = models.ForeignKey(Size, on_delete=models.CASCADE)

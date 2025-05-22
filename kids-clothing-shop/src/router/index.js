@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
+import { useAuthStore } from '@/stores/authStore';
 import HomeView from '@/views/HomeView.vue';
 
 const routes = [
@@ -7,6 +8,12 @@ const routes = [
     name: 'home',
     component: HomeView,
     meta: { title: 'Главная' }
+  },
+  {
+    path: '/account',
+    name: 'account',
+    component: () => import('@/views/AccountView.vue'),
+    meta: { title: 'Личный кабинет', requiresAuth: true }
   },
   // {
   //   path: '/categories/:gender',
@@ -144,5 +151,25 @@ const router = createRouter({
 //     next();
 //   }
 // });
+
+router.beforeEach((to, from, next) => {
+  // Update page title
+  document.title = to.meta.title ? `${to.meta.title} | Kids Clothing Shop` : 'Kids Clothing Shop';
+  
+  // Check for protected routes
+  if (to.matched.some(record => record.meta.requiresAuth)) {
+    const authStore = useAuthStore();
+    
+    if (!authStore.isAuthenticated) {
+      // Redirect to home page if not authenticated
+      // The user icon will open the login modal
+      next('/');
+    } else {
+      next();
+    }
+  } else {
+    next();
+  }
+});
 
 export default router;
