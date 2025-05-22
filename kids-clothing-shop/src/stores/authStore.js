@@ -17,7 +17,10 @@ export const useAuthStore = defineStore('auth', () => {
   const login = async (credentials) => {
     loading.value = true;
     try {
+      console.log('Attempting login with:', { username: credentials.username });
       const response = await api.login(credentials);
+      
+      console.log('Login response:', response.data);
       
       // Store tokens
       token.value = response.data.access;
@@ -31,6 +34,12 @@ export const useAuthStore = defineStore('auth', () => {
       
       return response.data;
     } catch (error) {
+      console.error('Login error details:', {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message
+      });
+      
       // Clear any existing auth data on login failure
       logout();
       throw error;

@@ -225,14 +225,26 @@ const handleLogin = async () => {
   loginLoading.value = true;
   
   try {
+    // Try login with email as username first
     await authStore.login({
-      username: loginForm.value.email, // Django often uses username field for email
+      username: loginForm.value.email,
       password: loginForm.value.password
     });
     
     closeModal();
   } catch (error) {
-    errorMessage.value = error.response?.data?.detail || 'Ошибка входа. Проверьте email и пароль.';
+    console.error('Login error:', error.response?.data);
+    
+    // Handle different error scenarios
+    if (error.response?.status === 401) {
+      errorMessage.value = 'Неверный email или пароль. Проверьте данные и попробуйте снова.';
+    } else if (error.response?.data?.detail) {
+      errorMessage.value = error.response.data.detail;
+    } else if (error.response?.data?.non_field_errors) {
+      errorMessage.value = error.response.data.non_field_errors[0];
+    } else {
+      errorMessage.value = 'Ошибка входа. Попробуйте еще раз.';
+    }
   } finally {
     loginLoading.value = false;
   }
