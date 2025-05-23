@@ -12,9 +12,11 @@
         <div class="account-section">
           <h2>Информация о профиле</h2>
           <div class="profile-info">
-            <p><strong>Имя пользователя:</strong> {{ authStore.userProfile.user?.username || 'Не указано' }}</p>
-            <p><strong>Email:</strong> {{ authStore.userProfile.user?.email || 'Не указан' }}</p>
+            <p><strong>Имя пользователя:</strong> {{ getUserData('username') }}</p>
+            <p><strong>Email:</strong> {{ getUserData('email') }}</p>
+            <p><strong>ФИО:</strong> {{ getUserData('first_name') }}</p>
             <p><strong>Телефон:</strong> {{ authStore.userProfile.phone_number || 'Не указан' }}</p>
+            <p><strong>Адрес:</strong> {{ authStore.userProfile.address || 'Не указан' }}</p>
           </div>
         </div>
         
@@ -57,6 +59,23 @@ import { useAuthStore } from '@/stores/authStore';
 
 const router = useRouter();
 const authStore = useAuthStore();
+
+const getUserData = (field) => {
+  const profile = authStore.userProfile;
+  if (!profile) return 'Не указано';
+  
+  // Try to get from user object first, then from profile directly
+  if (profile.user && profile.user[field]) {
+    return profile.user[field];
+  }
+  
+  // If no user object, try to get from profile directly
+  if (profile[field]) {
+    return profile[field];
+  }
+  
+  return 'Не указано';
+};
 
 const handleLogout = () => {
   authStore.logout();

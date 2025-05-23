@@ -88,11 +88,11 @@ export default {
   
   // Profile
   getUserProfile() {
-    return apiClient.get('/profiles/');
+    return apiClient.get('/profiles/me/');
   },
   
   updateUserProfile(profileData) {
-    return apiClient.put('/profiles/', profileData);
+    return apiClient.put('/profiles/update_me/', profileData);
   },
   
   // Products

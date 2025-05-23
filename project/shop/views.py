@@ -18,17 +18,51 @@ from .serializers import (
 
 
 class CustomerProfileViewSet(viewsets.ModelViewSet):
-    queryset = CustomerProfile.objects.all()
     serializer_class = CustomerProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = None  # Disable pagination for profiles
     
     def get_queryset(self):
-        # Получение только своего профиля
-        return CustomerProfile.objects.filter(user=self.request.user)
+        # Get or create profile for the current user
+        profile, created = CustomerProfile.objects.get_or_create(
+            user=self.request.user,
+            defaults={
+                'phone_number': '',
+                'address': ''
+            }
+        )
+        return CustomerProfile.objects.filter(user=self.request.user).order_by('id')
+    
+    def get_object(self):
+        # Get or create profile for the current user
+        profile, created = CustomerProfile.objects.get_or_create(
+            user=self.request.user,
+            defaults={
+                'phone_number': '',
+                'address': ''
+            }
+        )
+        return profile
+    
+    @action(detail=False, methods=['get'])
+    def me(self, request):
+        """Get current user's profile"""
+        profile = self.get_object()
+        serializer = self.get_serializer(profile)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['put', 'patch'])
+    def update_me(self, request):
+        """Update current user's profile"""
+        profile = self.get_object()
+        serializer = self.get_serializer(profile, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Category.objects.all()
+    queryset = Category.objects.all().order_by('name')
     serializer_class = CategorySerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ['gender', 'parent']
@@ -37,20 +71,20 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=False, methods=['get'])
     def boys(self, request):
         """Все категории товаров для мальчиков"""
-        categories = Category.objects.filter(Q(gender='B') | Q(gender='U'))
+        categories = Category.objects.filter(Q(gender='B') | Q(gender='U')).order_by('name')
         serializer = self.get_serializer(categories, many=True)
         return Response(serializer.data)
     
     @action(detail=False, methods=['get'])
     def girls(self, request):
         """Все категории товаров для девочек"""
-        categories = Category.objects.filter(Q(gender='G') | Q(gender='U'))
+        categories = Category.objects.filter(Q(gender='G') | Q(gender='U')).order_by('name')
         serializer = self.get_serializer(categories, many=True)
         return Response(serializer.data)
 
 
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Product.objects.filter(is_available=True)
+    queryset = Product.objects.filter(is_available=True).order_by('-created_at')
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['categories', 'categories__gender']
     search_fields = ['title', 'description', 'article']
@@ -66,7 +100,10 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     def boys(self, request):
         """Фильтр для товаров для мальчиков"""
         boy_categories = Category.objects.filter(Q(gender='B') | Q(gender='U'))
-        products = Product.objects.filter(categories__in=boy_categories, is_available=True).distinct()
+        products = Product.objects.filter(
+            categories__in=boy_categories, 
+            is_available=True
+        ).distinct().order_by('-created_at')
         
         page = self.paginate_queryset(products)
         if page is not None:
@@ -80,7 +117,10 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     def girls(self, request):
         """Фильтр для товаров для девочек"""
         girl_categories = Category.objects.filter(Q(gender='G') | Q(gender='U'))
-        products = Product.objects.filter(categories__in=girl_categories, is_available=True).distinct()
+        products = Product.objects.filter(
+            categories__in=girl_categories, 
+            is_available=True
+        ).distinct().order_by('-created_at')
         
         page = self.paginate_queryset(products)
         if page is not None:
@@ -93,13 +133,13 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=True, methods=['get'])
     def variants(self, request, pk=None):
         product = self.get_object()
-        variants = product.variants.all()
+        variants = product.variants.all().order_by('id')
         serializer = ProductVariantSerializer(variants, many=True)
         return Response(serializer.data)
 
 
 class ColorViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Color.objects.all()
+    queryset = Color.objects.all().order_by('name')
     serializer_class = ColorSerializer
 
 
@@ -113,7 +153,7 @@ class FavoriteViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     
     def get_queryset(self):
-        return Favorite.objects.filter(user=self.request.user)
+        return Favorite.objects.filter(user=self.request.user).order_by('-added_at')
     
     @action(detail=False, methods=['post'])
     def toggle(self, request):
@@ -140,14 +180,14 @@ class CartViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         if self.request.user.is_authenticated:
-            return Cart.objects.filter(user=self.request.user)
+            return Cart.objects.filter(user=self.request.user).order_by('-updated_at')
         
         session_id = self.request.session.session_key
         if not session_id:
             self.request.session.create()
             session_id = self.request.session.session_key
         
-        return Cart.objects.filter(session_id=session_id)
+        return Cart.objects.filter(session_id=session_id).order_by('-updated_at')
     
     def get_object(self):
         queryset = self.get_queryset()
@@ -219,7 +259,7 @@ class CartItemViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         cart = self.get_cart()
-        return CartItem.objects.filter(cart=cart)
+        return CartItem.objects.filter(cart=cart).order_by('-added_at')
     
     def get_cart(self):
         if self.request.user.is_authenticated:
@@ -273,7 +313,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     
     def get_queryset(self):
-        return Order.objects.filter(user=self.request.user)
+        return Order.objects.filter(user=self.request.user).order_by('-created_at')
     
     def create(self, request, *args, **kwargs):
         # Получение текущей корзины

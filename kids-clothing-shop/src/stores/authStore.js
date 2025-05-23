@@ -75,11 +75,15 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const response = await api.getUserProfile();
       user.value = response.data;
+      console.log('User profile fetched:', response.data);
     } catch (error) {
       console.error('Failed to fetch user profile:', error);
       // If profile fetch fails, it might mean token is invalid
       if (error.response?.status === 401) {
         logout();
+      } else if (error.response?.status === 404) {
+        // Profile doesn't exist, it will be created automatically on next API call
+        console.log('Profile not found, will be created automatically');
       }
     }
   };
