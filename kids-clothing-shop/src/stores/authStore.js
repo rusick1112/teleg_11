@@ -51,9 +51,12 @@ export const useAuthStore = defineStore('auth', () => {
   const register = async (userData) => {
     loading.value = true;
     try {
+      console.log('Attempting registration with data:', userData);
       const response = await api.register(userData);
+      console.log('Registration successful:', response.data);
       return response.data;
     } catch (error) {
+      console.error('Registration error:', error.response?.data);
       throw error;
     } finally {
       loading.value = false;

@@ -155,6 +155,19 @@ SIMPLE_JWT = {
     'TOKEN_TYPE_CLAIM': 'token_type',
 }
 
+# кастомная регистрация
+DJOSER = {
+    'SERIALIZERS': {
+        'user_create': 'shop.custom_serializers.CustomUserCreateSerializer',
+        'user': 'shop.custom_serializers.CustomUserSerializer',
+    },
+    'ACTIVATION_URL': '#/activate/{uid}/{token}',
+    'SEND_ACTIVATION_EMAIL': False,
+    'PASSWORD_RESET_CONFIRM_URL': '#/password/reset/confirm/{uid}/{token}',
+    'USERNAME_RESET_CONFIRM_URL': '#/username/reset/confirm/{uid}/{token}',
+    'SEND_CONFIRMATION_EMAIL': False,
+}
+
 # CORS
 CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS').split(',')
 

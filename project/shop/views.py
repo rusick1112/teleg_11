@@ -15,6 +15,7 @@ from .serializers import (
     ProductVariantSerializer, FavoriteSerializer, CartSerializer, 
     CartItemSerializer, OrderSerializer
 )
+from .custom_serializers import CustomUserSerializer
 
 
 class CustomerProfileViewSet(viewsets.ModelViewSet):
@@ -46,10 +47,29 @@ class CustomerProfileViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def me(self, request):
-        """Get current user's profile"""
+        """Get current user's profile with enhanced data"""
         profile = self.get_object()
-        serializer = self.get_serializer(profile)
-        return Response(serializer.data)
+        
+        # Return enhanced profile data
+        profile_data = {
+            'id': profile.id,
+            'user': {
+                'id': request.user.id,
+                'username': request.user.username,
+                'email': request.user.email,
+                'first_name': request.user.first_name,
+                'last_name': request.user.last_name,
+            },
+            'phone_number': profile.phone_number,
+            'address': profile.address,
+            # Also include flat structure for easier access
+            'username': request.user.username,
+            'email': request.user.email,
+            'first_name': request.user.first_name,
+            'last_name': request.user.last_name,
+        }
+        
+        return Response(profile_data)
     
     @action(detail=False, methods=['put', 'patch'])
     def update_me(self, request):
@@ -58,7 +78,26 @@ class CustomerProfileViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(profile, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(serializer.data)
+        
+        # Return the same enhanced format as the me endpoint
+        profile_data = {
+            'id': profile.id,
+            'user': {
+                'id': request.user.id,
+                'username': request.user.username,
+                'email': request.user.email,
+                'first_name': request.user.first_name,
+                'last_name': request.user.last_name,
+            },
+            'phone_number': profile.phone_number,
+            'address': profile.address,
+            'username': request.user.username,
+            'email': request.user.email,
+            'first_name': request.user.first_name,
+            'last_name': request.user.last_name,
+        }
+        
+        return Response(profile_data)
 
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):

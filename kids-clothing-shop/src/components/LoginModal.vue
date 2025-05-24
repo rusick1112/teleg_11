@@ -99,10 +99,44 @@
               id="register-username"
               v-model="registerForm.username"
               type="text"
+              placeholder="Ваше имя пользователя"
+              required
+              class="form-input"
+            />
+          </div>
+          
+          <div class="form-group">
+            <label for="register-first-name">Имя*</label>
+            <input
+              id="register-first-name"
+              v-model="registerForm.first_name"
+              type="text"
               placeholder="Ваше имя"
               required
               class="form-input"
             />
+          </div>
+          
+          <div class="form-group">
+            <label for="register-phone">Телефон</label>
+            <input
+              id="register-phone"
+              v-model="registerForm.phone_number"
+              type="tel"
+              placeholder="+7 (999) 123-45-67"
+              class="form-input"
+            />
+          </div>
+          
+          <div class="form-group">
+            <label for="register-address">Адрес</label>
+            <textarea
+              id="register-address"
+              v-model="registerForm.address"
+              placeholder="Ваш адрес доставки"
+              class="form-input form-textarea"
+              rows="2"
+            ></textarea>
           </div>
           
           <div class="form-group">
@@ -199,6 +233,9 @@ const loginForm = ref({
 const registerForm = ref({
   email: '',
   username: '',
+  first_name: '',
+  phone_number: '',
+  address: '',
   password: '',
   passwordConfirm: ''
 });
@@ -211,7 +248,15 @@ const closeModal = () => {
 
 const resetForms = () => {
   loginForm.value = { email: '', password: '' };
-  registerForm.value = { email: '', username: '', password: '', passwordConfirm: '' };
+  registerForm.value = { 
+    email: '', 
+    username: '', 
+    first_name: '', 
+    phone_number: '', 
+    address: '', 
+    password: '', 
+    passwordConfirm: '' 
+  };
   errorMessage.value = '';
   activeTab.value = 'login';
   showLoginPassword.value = false;
@@ -264,10 +309,14 @@ const handleRegister = async () => {
   registerLoading.value = true;
   
   try {
+    // Register user with flattened data structure
     await authStore.register({
       username: registerForm.value.username,
       email: registerForm.value.email,
-      password: registerForm.value.password
+      first_name: registerForm.value.first_name,
+      password: registerForm.value.password,
+      phone_number: registerForm.value.phone_number,
+      address: registerForm.value.address
     });
     
     // After successful registration, automatically log in
@@ -281,11 +330,17 @@ const handleRegister = async () => {
     const errors = error.response?.data;
     if (errors) {
       if (errors.email) {
-        errorMessage.value = 'Пользователь с таким email уже существует';
+        errorMessage.value = Array.isArray(errors.email) ? errors.email[0] : 'Пользователь с таким email уже существует';
       } else if (errors.username) {
-        errorMessage.value = 'Пользователь с таким именем уже существует';
+        errorMessage.value = Array.isArray(errors.username) ? errors.username[0] : 'Пользователь с таким именем уже существует';
       } else if (errors.password) {
-        errorMessage.value = errors.password[0] || 'Ошибка с паролем';
+        errorMessage.value = Array.isArray(errors.password) ? errors.password[0] : 'Ошибка с паролем';
+      } else if (errors.first_name) {
+        errorMessage.value = Array.isArray(errors.first_name) ? errors.first_name[0] : 'Ошибка с именем';
+      } else if (errors.phone_number) {
+        errorMessage.value = Array.isArray(errors.phone_number) ? errors.phone_number[0] : 'Ошибка с номером телефона';
+      } else if (errors.non_field_errors) {
+        errorMessage.value = Array.isArray(errors.non_field_errors) ? errors.non_field_errors[0] : 'Ошибка регистрации';
       } else {
         errorMessage.value = 'Ошибка регистрации. Попробуйте еще раз.';
       }
@@ -414,6 +469,12 @@ watch(() => props.isOpen, (isOpen) => {
   border-radius: 4px;
   font-size: 1rem;
   transition: border-color 0.2s ease;
+  resize: vertical;
+}
+
+.form-textarea {
+  min-height: 60px;
+  font-family: inherit;
 }
 
 .form-input:focus {
