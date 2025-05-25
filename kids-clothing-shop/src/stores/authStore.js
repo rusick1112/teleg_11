@@ -3,17 +3,14 @@ import { ref, computed } from 'vue';
 import api from '@/services/api';
 
 export const useAuthStore = defineStore('auth', () => {
-  // State
   const user = ref(null);
   const token = ref(localStorage.getItem('token') || null);
   const refreshToken = ref(localStorage.getItem('refreshToken') || null);
   const loading = ref(false);
 
-  // Getters
   const isAuthenticated = computed(() => !!token.value && !!user.value);
   const userProfile = computed(() => user.value);
 
-  // Actions
   const login = async (credentials) => {
     loading.value = true;
     try {
@@ -22,14 +19,13 @@ export const useAuthStore = defineStore('auth', () => {
       
       console.log('Login response:', response.data);
       
-      // Store tokens
+      // Хранение токенов доступа
       token.value = response.data.access;
       refreshToken.value = response.data.refresh;
       
       localStorage.setItem('token', token.value);
       localStorage.setItem('refreshToken', refreshToken.value);
-      
-      // Fetch user profile
+
       await fetchUserProfile();
       
       return response.data;
@@ -40,7 +36,7 @@ export const useAuthStore = defineStore('auth', () => {
         message: error.message
       });
       
-      // Clear any existing auth data on login failure
+      // Очистка данных при ошибке входа
       logout();
       throw error;
     } finally {
@@ -81,11 +77,10 @@ export const useAuthStore = defineStore('auth', () => {
       console.log('User profile fetched:', response.data);
     } catch (error) {
       console.error('Failed to fetch user profile:', error);
-      // If profile fetch fails, it might mean token is invalid
+
       if (error.response?.status === 401) {
         logout();
       } else if (error.response?.status === 404) {
-        // Profile doesn't exist, it will be created automatically on next API call
         console.log('Profile not found, will be created automatically');
       }
     }
@@ -112,17 +107,30 @@ export const useAuthStore = defineStore('auth', () => {
   const updateProfile = async (profileData) => {
     loading.value = true;
     try {
-      const response = await api.updateUserProfile(profileData);
+      console.log('Updating profile with data:', profileData);
+      
+      // Обновление профиля
+      const updatePayload = {
+        first_name: profileData.first_name,
+        last_name: profileData.last_name,
+        phone_number: profileData.phone_number,
+        address: profileData.address
+      };
+      
+      const response = await api.updateUserProfile(updatePayload);
+
       user.value = { ...user.value, ...response.data };
+      
+      console.log('Profile updated successfully:', response.data);
       return response.data;
     } catch (error) {
+      console.error('Profile update error:', error.response?.data);
       throw error;
     } finally {
       loading.value = false;
     }
   };
 
-  // Initialize auth state on store creation
   const initializeAuth = async () => {
     if (token.value) {
       await fetchUserProfile();
@@ -130,17 +138,14 @@ export const useAuthStore = defineStore('auth', () => {
   };
 
   return {
-    // State
     user,
     token,
     refreshToken,
     loading,
-    
-    // Getters
+
     isAuthenticated,
     userProfile,
-    
-    // Actions
+
     login,
     register,
     logout,

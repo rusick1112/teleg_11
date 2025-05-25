@@ -23,8 +23,8 @@
             Новый покупатель
           </button>
         </div>
-        
-        <!-- Login Form -->
+
+        <!-- Форма входа -->
         <form v-if="activeTab === 'login'" @submit.prevent="handleLogin" class="auth-form">
           <div class="form-group">
             <label for="login-email">Email*</label>
@@ -72,14 +72,14 @@
           
           <div class="auth-footer">
             <p class="auth-notice">
-              Нажимая кнопку «Войти» Покупатель подтверждает согласие с 
+              Нажимая кнопку «Войти» Вы подтверждаете согласие с 
               <a href="/privacy" class="auth-link">Политикой конфиденциальности и защиты персональных данных</a>
               и дает <a href="/consent" class="auth-link">СОГЛАСИЕ</a> на обработку персональных данных
             </p>
           </div>
         </form>
         
-        <!-- Registration Form -->
+        <!-- Форма регистрации -->
         <form v-if="activeTab === 'register'" @submit.prevent="handleRegister" class="auth-form">
           <div class="form-group">
             <label for="register-email">Email*</label>
@@ -94,7 +94,7 @@
           </div>
           
           <div class="form-group">
-            <label for="register-username">Имя пользователя*</label>
+            <label for="register-username">Логин*</label>
             <input
               id="register-username"
               v-model="registerForm.username"
@@ -191,8 +191,7 @@
             </p>
           </div>
         </form>
-        
-        <!-- Error Message -->
+
         <div v-if="errorMessage" class="error-message">
           {{ errorMessage }}
         </div>
@@ -216,7 +215,6 @@ const emit = defineEmits(['close']);
 
 const authStore = useAuthStore();
 
-// Form state
 const activeTab = ref('login');
 const showLoginPassword = ref(false);
 const showRegisterPassword = ref(false);
@@ -224,7 +222,6 @@ const loginLoading = ref(false);
 const registerLoading = ref(false);
 const errorMessage = ref('');
 
-// Form data
 const loginForm = ref({
   email: '',
   password: ''
@@ -240,7 +237,6 @@ const registerForm = ref({
   passwordConfirm: ''
 });
 
-// Methods
 const closeModal = () => {
   emit('close');
   resetForms();
@@ -270,7 +266,7 @@ const handleLogin = async () => {
   loginLoading.value = true;
   
   try {
-    // Try login with email as username first
+
     await authStore.login({
       username: loginForm.value.email,
       password: loginForm.value.password
@@ -279,8 +275,7 @@ const handleLogin = async () => {
     closeModal();
   } catch (error) {
     console.error('Login error:', error.response?.data);
-    
-    // Handle different error scenarios
+
     if (error.response?.status === 401) {
       errorMessage.value = 'Неверный email или пароль. Проверьте данные и попробуйте снова.';
     } else if (error.response?.data?.detail) {
@@ -299,8 +294,7 @@ const handleRegister = async () => {
   if (registerLoading.value) return;
   
   errorMessage.value = '';
-  
-  // Validate password confirmation
+
   if (registerForm.value.password !== registerForm.value.passwordConfirm) {
     errorMessage.value = 'Пароли не совпадают';
     return;
@@ -309,7 +303,6 @@ const handleRegister = async () => {
   registerLoading.value = true;
   
   try {
-    // Register user with flattened data structure
     await authStore.register({
       username: registerForm.value.username,
       email: registerForm.value.email,
@@ -318,8 +311,6 @@ const handleRegister = async () => {
       phone_number: registerForm.value.phone_number,
       address: registerForm.value.address
     });
-    
-    // After successful registration, automatically log in
     await authStore.login({
       username: registerForm.value.email,
       password: registerForm.value.password
@@ -352,14 +343,12 @@ const handleRegister = async () => {
   }
 };
 
-// Watch for modal close to reset forms
 watch(() => props.isOpen, (newVal) => {
   if (!newVal) {
     resetForms();
   }
 });
 
-// Prevent body scroll when modal is open
 watch(() => props.isOpen, (isOpen) => {
   if (isOpen) {
     document.body.style.overflow = 'hidden';

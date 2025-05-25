@@ -10,13 +10,30 @@
       
       <div class="account-content" v-if="authStore.userProfile">
         <div class="account-section">
-          <h2>Информация о профиле</h2>
+          <div class="section-header">
+            <h2>Информация о профиле</h2>
+          </div>
           <div class="profile-info">
-            <p><strong>Имя пользователя:</strong> {{ getUserData('username') }}</p>
-            <p><strong>Email:</strong> {{ getUserData('email') }}</p>
-            <p><strong>ФИО:</strong> {{ getUserData('first_name') }}</p>
-            <p><strong>Телефон:</strong> {{ authStore.userProfile.phone_number || 'Не указан' }}</p>
-            <p><strong>Адрес:</strong> {{ authStore.userProfile.address || 'Не указан' }}</p>
+            <div class="info-row">
+              <span class="info-label">Логин:</span>
+              <span class="info-value">{{ getUserData('username') }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Email:</span>
+              <span class="info-value">{{ getUserData('email') }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">ФИО:</span>
+              <span class="info-value">{{ getUserData('first_name') }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Телефон:</span>
+              <span class="info-value">{{ authStore.userProfile.phone_number || 'Не указан' }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Адрес:</span>
+              <span class="info-value">{{ authStore.userProfile.address || 'Не указан' }}</span>
+            </div>
           </div>
         </div>
         
@@ -24,19 +41,41 @@
           <h2>Быстрые действия</h2>
           <div class="quick-actions">
             <router-link to="/orders" class="action-card">
-              <h3>Мои заказы</h3>
-              <p>Просмотр истории заказов</p>
+              <div class="action-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                  <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                </svg>
+              </div>
+              <div class="action-content">
+                <h3>Мои заказы</h3>
+                <p>Просмотр истории заказов</p>
+              </div>
             </router-link>
             
             <router-link to="/favorites" class="action-card">
-              <h3>Избранное</h3>
-              <p>Сохраненные товары</p>
+              <div class="action-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"></path>
+                </svg>
+              </div>
+              <div class="action-content">
+                <h3>Избранное</h3>
+                <p>Сохраненные товары</p>
+              </div>
             </router-link>
             
-            <router-link to="/profile/edit" class="action-card">
-              <h3>Редактировать профиль</h3>
-              <p>Изменить личные данные</p>
-            </router-link>
+            <button @click="openEditModal" class="action-card action-button-card">
+              <div class="action-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 6L9 17l-5-5"></path>
+                </svg>
+              </div>
+              <div class="action-content">
+                <h3>Редактировать профиль</h3>
+                <p>Изменить личные данные</p>
+              </div>
+            </button>
           </div>
         </div>
       </div>
@@ -49,27 +88,34 @@
         Ошибка загрузки профиля
       </div>
     </div>
+    
+    <!-- Модальное окно для изменения профиля -->
+    <EditProfileModal 
+      :is-open="editModalOpen" 
+      @close="closeEditModal"
+      @updated="handleProfileUpdated"
+    />
   </div>
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/authStore';
+import EditProfileModal from '@/components/EditProfileModal.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
+const editModalOpen = ref(false);
 
 const getUserData = (field) => {
   const profile = authStore.userProfile;
   if (!profile) return 'Не указано';
-  
-  // Try to get from user object first, then from profile directly
+
   if (profile.user && profile.user[field]) {
     return profile.user[field];
   }
-  
-  // If no user object, try to get from profile directly
+
   if (profile[field]) {
     return profile[field];
   }
@@ -82,14 +128,24 @@ const handleLogout = () => {
   router.push('/');
 };
 
+const openEditModal = () => {
+  editModalOpen.value = true;
+};
+
+const closeEditModal = () => {
+  editModalOpen.value = false;
+};
+
+const handleProfileUpdated = async () => {
+  await authStore.fetchUserProfile();
+};
+
 onMounted(async () => {
-  // Redirect to home if not authenticated
   if (!authStore.isAuthenticated) {
     router.push('/');
     return;
   }
-  
-  // Fetch user profile if not already loaded
+
   if (!authStore.userProfile) {
     await authStore.fetchUserProfile();
   }
@@ -152,6 +208,124 @@ onMounted(async () => {
   padding: 1.5rem;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.account-section h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+  color: #333;
+}
+
+.edit-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #000;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: opacity 0.2s ease;
+}
+
+.edit-button:hover {
+  opacity: 0.9;
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.info-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.info-label {
+  font-weight: 500;
+  color: #555;
+  font-size: 0.875rem;
+}
+
+.info-value {
+  color: #333;
+  font-size: 1rem;
+}
+
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.action-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.action-button-card {
+  cursor: pointer;
+  border: none;
+  background: white;
+  border: 1px solid #e0e0e0;
+  text-align: left;
+}
+
+.action-card:hover {
+  border-color: #000;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.action-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  color: #666;
+  flex-shrink: 0;
+}
+
+.action-content h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem 0;
+  color: #333;
+}
+
+.action-content p {
+  margin: 0;
+  color: #666;
+  font-size: 0.9rem;
+-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .account-section h2 {

@@ -109,16 +109,15 @@ const searchOpen = ref(false);
 const loginModalOpen = ref(false);
 const searchQuery = ref('');
 const scrolled = ref(false);
-const activeCategory = ref('girls'); // Default to girls category
+const activeCategory = ref('girls');
 
 const toggleMenu = () => {
   menuOpen.value = !menuOpen.value;
-  // Close search if it's open
   if (menuOpen.value && searchOpen.value) {
     searchOpen.value = false;
   }
   
-  // Prevent scrolling when menu is open
+  // Защита от скрола при открытом меню
   if (menuOpen.value) {
     document.body.style.overflow = 'hidden';
   } else {
@@ -128,7 +127,6 @@ const toggleMenu = () => {
 
 const toggleSearch = () => {
   searchOpen.value = !searchOpen.value;
-  // Close menu if it's open
   if (searchOpen.value && menuOpen.value) {
     menuOpen.value = false;
     document.body.style.overflow = '';
@@ -149,10 +147,10 @@ const setActiveCategory = (category) => {
 
 const handleUserIconClick = () => {
   if (authStore.isAuthenticated) {
-    // Redirect to account page if user is authenticated
+    // Если аутентифицирован, то переход на страницу профиля
     router.push('/account');
   } else {
-    // Open login modal if user is not authenticated
+    // Форма аутентификации
     loginModalOpen.value = true;
   }
 };
@@ -165,7 +163,6 @@ const handleScroll = () => {
   scrolled.value = window.scrollY > 10;
 };
 
-// Close menu when escape key is pressed
 const handleKeydown = (event) => {
   if (event.key === 'Escape') {
     if (menuOpen.value) {
@@ -179,11 +176,9 @@ const handleKeydown = (event) => {
 onMounted(async () => {
   window.addEventListener('scroll', handleScroll);
   window.addEventListener('keydown', handleKeydown);
-  
-  // Initialize authentication state
+
   await authStore.initializeAuth();
-  
-  // Set active category based on current route
+
   const path = router.currentRoute.value.path;
   if (path.includes('/categories/girls')) {
     activeCategory.value = 'girls';
@@ -297,11 +292,11 @@ onUnmounted(() => {
   border-top: 1px solid #e0e0e0;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: none; /* Firefox */
+  scrollbar-width: none; 
 }
 
 .category-nav::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
+  display: none; 
 }
 
 .category-button {
@@ -356,7 +351,6 @@ onUnmounted(() => {
   cursor: pointer;
 }
 
-/* Menu overlay and side menu */
 .menu-overlay {
   position: fixed;
   top: 0;
@@ -422,7 +416,6 @@ onUnmounted(() => {
   background-color: #f5f5f5;
 }
 
-/* Responsive adjustments */
 @media (min-width: 768px) {
   .header-content {
     padding: 1rem 2rem;
