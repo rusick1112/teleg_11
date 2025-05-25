@@ -13,6 +13,21 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id', 'username', 'email', 'first_name', 'last_name']
         read_only_fields = ['id']
 
+class EnhancedCustomerProfileSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    username = serializers.CharField(source='user.username', read_only=True)
+    email = serializers.CharField(source='user.email', read_only=True)
+    first_name = serializers.CharField(source='user.first_name', read_only=True)
+    last_name = serializers.CharField(source='user.last_name', read_only=True)
+    
+    class Meta:
+        model = CustomerProfile
+        fields = [
+            'id', 'user', 'username', 'email', 'first_name', 'last_name',
+            'phone_number', 'address'
+        ]
+        read_only_fields = ['id', 'user', 'username', 'email', 'first_name', 'last_name']
+        
 
 class CustomerProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)

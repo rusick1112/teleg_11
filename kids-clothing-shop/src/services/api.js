@@ -18,26 +18,50 @@ apiClient.interceptors.request.use(
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
+    
+    // Add debug logging
+    console.log('API Request:', {
+      method: config.method?.toUpperCase(),
+      url: config.url,
+      data: config.data,
+      headers: config.headers
+    });
+    
     return config;
   },
   error => {
+    console.error('Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
 
 // Add response interceptor to handle common errors
 apiClient.interceptors.response.use(
-  response => response,
+  response => {
+    console.log('API Response:', {
+      status: response.status,
+      url: response.config.url,
+      data: response.data
+    });
+    return response;
+  },
   error => {
+    console.error('API Error:', {
+      status: error.response?.status,
+      url: error.config?.url,
+      data: error.response?.data,
+      message: error.message
+    });
+    
     // Handle token expiration
     if (error.response?.status === 401) {
       // Clear tokens and redirect to login if token is invalid or expired
       localStorage.removeItem('token');
       localStorage.removeItem('refreshToken');
       
-      // Only redirect to login if not already there
-      if (!window.location.pathname.includes('/login')) {
-        window.location.href = '/login';
+      // Only redirect to login if not already there and not on home page
+      if (!window.location.pathname.includes('/login') && window.location.pathname !== '/') {
+        window.location.href = '/';
       }
     }
     
@@ -49,6 +73,7 @@ apiClient.interceptors.response.use(
 export default {
   // Authentication
   login(credentials) {
+    console.log('Attempting login with credentials:', credentials);
     return apiClient.post('/token/', credentials);
   },
   
@@ -57,16 +82,17 @@ export default {
   },
   
   register(userData) {
+    console.log('Attempting registration with data:', userData);
     return apiClient.post('/auth/users/', userData);
   },
   
   // Profile
   getUserProfile() {
-    return apiClient.get('/profiles/');
+    return apiClient.get('/profiles/me/');
   },
   
   updateUserProfile(profileData) {
-    return apiClient.put('/profiles/', profileData);
+    return apiClient.put('/profiles/update_me/', profileData);
   },
   
   // Products

@@ -1,15 +1,19 @@
 from django.contrib import admin
-from .models import (
-    CustomerProfile, Category, Product, Color, Size,
-    ProductVariant, ProductImage, ProductStock,
-    Favorite, Cart, CartItem, Order, OrderItem
-)
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth.models import User
+from .models import *
 
 # прокси модель для профиля
-@admin.register(CustomerProfile)
-class CustomerProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'phone_number')
-    search_fields = ('user__username', 'user__email', 'phone_number')
+class EmployeeInline(admin.StackedInline):
+    model = CustomerProfile
+    can_delete = False
+    verbose_name_plural = "Информация"
+
+class UserAdmin(BaseUserAdmin):
+    inlines = [EmployeeInline]
+
+admin.site.unregister(User)
+admin.site.register(User, UserAdmin)
 
 # категория товаров
 @admin.register(Category)
