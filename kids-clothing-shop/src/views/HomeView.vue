@@ -4,42 +4,34 @@
       <section class="hero-split">
         <div class="split-container">
           <!-- Girls Section -->
-          <div class="split-section girls-section">
+          <router-link to="/categories/girls" class="split-section girls-section">
             <div class="split-image">
               <div class="image-placeholder girls-placeholder">
                 <div class="placeholder-content">
                   <div class="placeholder-icon">👗</div>
-                  <p>Коллекция для девочек</p>
                 </div>
               </div>
               <div class="split-overlay"></div>
             </div>
             <div class="split-content">
               <h2 class="split-title">ДЕВОЧКИ</h2>
-              <router-link to="/categories/girls" class="split-button">
-                СМОТРЕТЬ КОЛЛЕКЦИЮ
-              </router-link>
             </div>
-          </div>
+          </router-link>
           
           <!-- Boys Section -->
-          <div class="split-section boys-section">
+          <router-link to="/categories/boys" class="split-section boys-section">
             <div class="split-image">
               <div class="image-placeholder boys-placeholder">
                 <div class="placeholder-content">
                   <div class="placeholder-icon">👕</div>
-                  <p>Коллекция для мальчиков</p>
                 </div>
               </div>
               <div class="split-overlay"></div>
             </div>
             <div class="split-content">
               <h2 class="split-title">МАЛЬЧИКИ</h2>
-              <router-link to="/categories/boys" class="split-button">
-                СМОТРЕТЬ КОЛЛЕКЦИЮ
-              </router-link>
             </div>
-          </div>
+          </router-link>
         </div>
       </section>
     </main>
@@ -85,6 +77,10 @@ import { ref, onMounted } from 'vue';
   position: relative;
   overflow: hidden;
   transition: flex 0.3s ease;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  cursor: pointer;
 }
 
 .split-section:hover {
@@ -175,44 +171,25 @@ import { ref, onMounted } from 'vue';
 
 .split-content {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  padding: 3rem 2rem;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   color: white;
   z-index: 10;
   text-align: center;
+  width: 100%;
 }
 
 .split-title {
-  font-size: 3rem;
+  font-size: 4rem;
   font-weight: 700;
   text-transform: uppercase;
-  margin-bottom: 2rem;
-  letter-spacing: 2px;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  margin: 0;
+  letter-spacing: 3px;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
 }
 
-.split-button {
-  display: inline-block;
-  background-color: #000;
-  color: #fff;
-  padding: 1rem 2rem;
-  text-decoration: none;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  border-radius: 4px;
-  transition: all 0.3s ease;
-  border: 2px solid #000;
-}
-
-.split-button:hover {
-  background-color: transparent;
-  color: #fff;
-  border-color: #fff;
-  transform: translateY(-2px);
-}
+/* Remove split button styles as they're no longer needed */
 
 /* Girls Section Styling */
 .girls-section .split-overlay {
@@ -247,11 +224,8 @@ import { ref, onMounted } from 'vue';
   }
   
   .split-title {
-    font-size: 2rem;
-  }
-  
-  .split-content {
-    padding: 2rem 1rem;
+    font-size: 2.5rem;
+    letter-spacing: 2px;
   }
   
   .placeholder-icon {
@@ -265,13 +239,13 @@ import { ref, onMounted } from 'vue';
 
 @media (min-width: 1024px) {
   .split-title {
-    font-size: 4rem;
+    font-size: 5rem;
   }
 }
 
 @media (min-width: 1200px) {
   .split-title {
-    font-size: 5rem;
+    font-size: 6rem;
   }
 }
 </style>
