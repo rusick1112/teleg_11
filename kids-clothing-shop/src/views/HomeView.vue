@@ -52,16 +52,26 @@ import { ref, onMounted } from 'vue';
 </script>
 
 <style scoped>
+.home {
+  /* Remove any margins/padding that might cause white space */
+  margin: 0;
+  padding: 0;
+}
+
 .main-content {
-  padding-top: 120px;
+  /* Reduce padding-top or remove it completely if header overlaps */
+  padding-top: 0;
+  margin: 0;
 }
 
 /* Hero Split Section */
 .hero-split {
-  height: 80vh;
+  height: 100vh; /* Use full viewport height */
   min-height: 600px;
   position: relative;
   overflow: hidden;
+  margin: 0;
+  padding: 0;
 }
 
 .split-container {
@@ -105,6 +115,7 @@ import { ref, onMounted } from 'vue';
   justify-content: center;
   position: relative;
   overflow: hidden;
+  transition: transform 0.5s ease;
 }
 
 .girls-placeholder {
@@ -141,36 +152,7 @@ import { ref, onMounted } from 'vue';
   font-size: 1.2rem;
   font-weight: 500;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-/* Category Placeholders */
-.category-placeholder {
-  height: 200px;
-}
-
-.dresses-placeholder {
-  background: linear-gradient(135deg, #FFB6C1, #FF69B4);
-}
-
-.shirts-placeholder {
-  background: linear-gradient(135deg, #87CEEB, #4682B4);
-}
-
-.accessories-placeholder {
-  background: linear-gradient(135deg, #DDA0DD, #9370DB);
-}
-
-.shoes-placeholder {
-  background: linear-gradient(135deg, #F0E68C, #DAA520);
-}
-
-.category-placeholder .placeholder-icon {
-  font-size: 2.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.category-placeholder .placeholder-content p {
-  font-size: 0.9rem;
+  margin: 0;
 }
 
 .split-section:hover .split-image img,
@@ -252,6 +234,10 @@ import { ref, onMounted } from 'vue';
 
 /* Responsive Design */
 @media (max-width: 768px) {
+  .hero-split {
+    height: 100vh; /* Keep full height on mobile */
+  }
+  
   .split-container {
     flex-direction: column;
   }
@@ -268,40 +254,16 @@ import { ref, onMounted } from 'vue';
     padding: 2rem 1rem;
   }
   
-  .section {
-    margin: 2rem 0;
+  .placeholder-icon {
+    font-size: 3rem;
   }
   
-  .section-title {
-    font-size: 1.5rem;
-  }
-  
-  .section-header {
-    flex-direction: column;
-    gap: 1rem;
-    text-align: center;
-  }
-  
-  .product-grid {
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 1rem;
-  }
-  
-  .categories-grid {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
+  .placeholder-content p {
+    font-size: 1rem;
   }
 }
 
 @media (min-width: 1024px) {
-  .container {
-    padding: 0 2rem;
-  }
-  
-  .product-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-  
   .split-title {
     font-size: 4rem;
   }
