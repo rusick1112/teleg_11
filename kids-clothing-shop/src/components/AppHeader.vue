@@ -40,25 +40,6 @@
       </div>
     </div>
     
-    <nav class="category-nav">
-      <router-link 
-        to="/categories/girls" 
-        class="category-button"
-        :class="{ 'active': activeCategory === 'girls' }"
-        @click="setActiveCategory('girls')"
-      >
-        ДЕВОЧКИ
-      </router-link>
-      <router-link 
-        to="/categories/boys" 
-        class="category-button"
-        :class="{ 'active': activeCategory === 'boys' }"
-        @click="setActiveCategory('boys')"
-      >
-        МАЛЬЧИКИ
-      </router-link>
-    </nav>
-    
     <div class="search-panel" v-if="searchOpen">
       <div class="search-container">
         <input 

@@ -1,4 +1,5 @@
 <template>
+    <AppHeader />
   <div class="account-page">
     <div class="container">
       <div class="account-header">
@@ -101,6 +102,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import AppHeader from '@/components/AppHeader.vue';
 import { useAuthStore } from '@/stores/authStore';
 import EditProfileModal from '@/components/EditProfileModal.vue';
 
