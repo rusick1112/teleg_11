@@ -15,6 +15,79 @@ const routes = [
     component: () => import('@/views/AccountView.vue'),
     meta: { title: 'Личный кабинет', requiresAuth: true }
   },
+  {
+    path: '/categories/boys',
+    name: 'boys-category',
+    component: () => import('@/views/BoysView.vue'),
+    meta: { title: 'Одежда для мальчиков' }
+  },
+  {
+    path: '/categories/girls',
+    name: 'girls-category',
+    component: () => import('@/views/GirlsView.vue'),
+    meta: { title: 'Одежда для девочек' }
+  },
+  // {
+  //   path: '/categories/boys/:subcategory',
+  //   name: 'boys-subcategory',
+  //   component: () => import('@/views/CategoryDetailView.vue'),
+  //   meta: { title: 'Категория для мальчиков' },
+  //   props: route => ({ 
+  //     gender: 'boys', 
+  //     subcategory: route.params.subcategory 
+  //   })
+  // },
+  // {
+  //   path: '/categories/girls/:subcategory',
+  //   name: 'girls-subcategory',
+  //   component: () => import('@/views/CategoryDetailView.vue'),
+  //   meta: { title: 'Категория для девочек' },
+  //   props: route => ({ 
+  //     gender: 'girls', 
+  //     subcategory: route.params.subcategory 
+  //   })
+  // },
+  // {
+  //   path: '/products/:slug',
+  //   name: 'product-detail',
+  //   component: () => import('@/views/ProductDetailView.vue'),
+  //   meta: { title: 'Товар' }
+  // },
+  // {
+  //   path: '/account',
+  //   name: 'account',
+  //   component: () => import('@/views/AccountView.vue'),
+  //   meta: { title: 'Личный кабинет', requiresAuth: true }
+  // },
+  // {
+  //   path: '/favorites',
+  //   name: 'favorites',
+  //   component: () => import('@/views/FavoritesView.vue'),
+  //   meta: { title: 'Избранное' }
+  // },
+  // {
+  //   path: '/cart',
+  //   name: 'cart',
+  //   component: () => import('@/views/CartView.vue'),
+  //   meta: { title: 'Корзина' }
+  // },
+  // {
+  //   path: '/search',
+  //   name: 'search',
+  //   component: () => import('@/views/SearchView.vue'),
+  //   meta: { title: 'Поиск' }
+  // },
+  // // Error pages
+  // {
+  //   path: '/404',
+  //   name: 'not-found',
+  //   component: () => import('@/views/NotFoundView.vue'),
+  //   meta: { title: 'Страница не найдена' }
+  // },
+  // {
+  //   path: '/:pathMatch(.*)*',
+  //   redirect: '/404'
+  // }
   // {
   //   path: '/categories/:gender',
   //   name: 'categories',
@@ -66,18 +139,6 @@ const routes = [
   //       next();
   //     }
   //   }
-  // },
-  // {
-  //   path: '/login',
-  //   name: 'login',
-  //   component: () => import('@/views/LoginView.vue'),
-  //   meta: { title: 'Вход' }
-  // },
-  // {
-  //   path: '/register',
-  //   name: 'register',
-  //   component: () => import('@/views/RegisterView.vue'),
-  //   meta: { title: 'Регистрация' }
   // },
   // {
   //   path: '/account',
