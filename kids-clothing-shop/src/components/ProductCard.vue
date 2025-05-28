@@ -109,7 +109,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useAuthStore } from '@/stores/authStore';
-// import { useFavoriteStore } from '@/stores/favoriteStore';
+import { useFavoriteStore } from '@/stores/favoriteStore';
 // import { useCartStore } from '@/stores/cartStore';
 
 const props = defineProps({
@@ -120,7 +120,7 @@ const props = defineProps({
 });
 
 const authStore = useAuthStore();
-// const favoriteStore = useFavoriteStore();
+const favoriteStore = useFavoriteStore();
 // const cartStore = useCartStore();
 
 const imageError = ref(false);
@@ -178,8 +178,8 @@ const salePercentage = computed(() => {
 
 const isFavorite = computed(() => {
   // This would connect to your favorite store
-  // return favoriteStore.isFavorite(props.product.id);
-  return false;
+  return favoriteStore.isFavorite(props.product.id);
+  // return false;
 });
 
 // Methods

@@ -27,7 +27,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import ProductCard from '@/components/ProductCard.vue';
+import ProductCard from '@/components/ProductCart.vue';
 import api from '@/services/api';
 
 const props = defineProps({

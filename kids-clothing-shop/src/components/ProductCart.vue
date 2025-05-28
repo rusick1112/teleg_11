@@ -13,7 +13,8 @@
       <button 
         class="favorite-button"
         :class="{ 'active': isFavorite }"
-        @click="toggleFavorite"
+        @click.stop.prevent="toggleFavorite"
+        :disabled="isToggling"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="heart-icon">
           <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"></path>
@@ -42,8 +43,9 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import { useStore } from '@/stores/favoriteStore';
+import { computed, ref, watch, nextTick } from 'vue';
+import { useFavoriteStore } from '@/stores/favoriteStore';
+import { useAuthStore } from '@/stores/authStore';
 
 const props = defineProps({
   product: {
@@ -52,16 +54,30 @@ const props = defineProps({
   }
 });
 
-const store = useStore();
-const isFavorite = computed(() => store.isFavorite(props.product.id));
+const favoriteStore = useFavoriteStore();
+const authStore = useAuthStore();
+const isToggling = ref(false);
+
+// Create a reactive computed that properly tracks the store state
+const isFavorite = computed(() => {
+  // This forces reactivity by directly checking the store's reactive array
+  return favoriteStore.favoriteItems.some(item => item.id === props.product.id);
+});
+
+// Debug watcher to see when favorite status changes
+watch(isFavorite, (newVal, oldVal) => {
+  console.log(`Product ${props.product.id} favorite status: ${oldVal} -> ${newVal}`);
+}, { immediate: true });
+
+// Watch for changes in the favorites array
+watch(() => favoriteStore.favoriteItems, (newItems) => {
+  console.log('Favorites array updated:', newItems.length, 'items');
+}, { deep: true });
 
 const mainImage = computed(() => {
-  // If there's a main image in the product, use it
   if (props.product.main_image_url) {
     return props.product.main_image_url;
   }
-  
-  // Fallback to a placeholder if no image is available
   return '/images/placeholder.jpg';
 });
 
@@ -74,8 +90,32 @@ const salePercentage = computed(() => {
   return null;
 });
 
-const toggleFavorite = () => {
-  store.toggleFavorite(props.product);
+const toggleFavorite = async () => {
+  if (isToggling.value) return;
+  
+  console.log('=== TOGGLE FAVORITE START ===');
+  console.log('Product:', props.product.title, 'ID:', props.product.id);
+  console.log('Current status:', isFavorite.value);
+  console.log('User authenticated:', authStore.isAuthenticated);
+  
+  isToggling.value = true;
+  
+  try {
+    await favoriteStore.toggleFavorite(props.product);
+    
+    // Wait for reactivity to update
+    await nextTick();
+    
+    console.log('Toggle completed. New status:', isFavorite.value);
+    console.log('Current favorites count:', favoriteStore.favoriteItems.length);
+    
+  } catch (error) {
+    console.error('Toggle favorite error:', error);
+  } finally {
+    isToggling.value = false;
+  }
+  
+  console.log('=== TOGGLE FAVORITE END ===');
 };
 
 const formatPrice = (price) => {
@@ -145,16 +185,39 @@ const formatPrice = (price) => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
+  z-index: 10;
 }
 
 .favorite-button:hover {
   background: #fff;
+  transform: scale(1.1);
+}
+
+.favorite-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.favorite-button.active {
+  background: rgba(255, 75, 75, 0.1);
 }
 
 .favorite-button.active .heart-icon {
   fill: #ff4b4b;
   stroke: #ff4b4b;
+  animation: heartBeat 0.6s ease-in-out;
+}
+
+.heart-icon {
+  transition: all 0.3s ease;
+}
+
+@keyframes heartBeat {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
 }
 
 .product-info {
@@ -168,6 +231,10 @@ const formatPrice = (price) => {
   font-size: 0.875rem;
   margin-bottom: 0.25rem;
   line-height: 1.2;
+}
+
+.product-title:hover {
+  color: #666;
 }
 
 .product-price {

@@ -53,12 +53,12 @@ const routes = [
   //   component: () => import('@/views/ProductDetailView.vue'),
   //   meta: { title: 'Товар' }
   // },
-  // {
-  //   path: '/favorites',
-  //   name: 'favorites',
-  //   component: () => import('@/views/FavoritesView.vue'),
-  //   meta: { title: 'Избранное' }
-  // },
+  {
+    path: '/favorites',
+    name: 'favorites',
+    component: () => import('@/views/FavoritesView.vue'),
+    meta: { title: 'Избранное' }
+  },
   // {
   //   path: '/cart',
   //   name: 'cart',
