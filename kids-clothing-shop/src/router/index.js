@@ -54,12 +54,6 @@ const routes = [
   //   meta: { title: 'Товар' }
   // },
   // {
-  //   path: '/account',
-  //   name: 'account',
-  //   component: () => import('@/views/AccountView.vue'),
-  //   meta: { title: 'Личный кабинет', requiresAuth: true }
-  // },
-  // {
   //   path: '/favorites',
   //   name: 'favorites',
   //   component: () => import('@/views/FavoritesView.vue'),

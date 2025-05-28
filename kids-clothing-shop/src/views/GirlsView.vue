@@ -290,7 +290,7 @@ onMounted(async () => {
 
 .category-image {
   width: 100%;
-  height: 180px;
+  height: 280px;
   overflow: hidden;
   position: relative;
 }
@@ -298,7 +298,7 @@ onMounted(async () => {
 .category-img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   transition: transform 0.3s ease;
 }
 
@@ -384,7 +384,7 @@ onMounted(async () => {
 }
 
 .category-info {
-  padding: 1.5rem;
+  padding: 1rem;
   text-align: center;
 }
 
@@ -489,7 +489,7 @@ onMounted(async () => {
   }
   
   .category-image {
-    height: 150px;
+    height: 220px;
   }
   
   .placeholder-icon {
