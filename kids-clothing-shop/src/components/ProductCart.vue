@@ -1,27 +1,73 @@
 <template>
   <div class="product-card">
     <div class="product-image-container">
-      <router-link :to="`/products/${product.slug}`">
-        <img 
-          :src="mainImage" 
-          :alt="product.title" 
-          class="product-image"
-        >
-        <span v-if="product.is_new" class="product-badge new">NEW</span>
-        <span v-if="salePercentage" class="product-badge sale">-{{ salePercentage }}%</span>
+      <router-link :to="`/products/${product.slug}`" class="product-link">
+        <!-- Product Image -->
+        <div class="product-image-wrapper">
+          <img 
+            :src="mainImage" 
+            :alt="product.title" 
+            class="product-image"
+          >
+        </div>
+        
+        <!-- Product Badges -->
+        <div class="product-badges">
+          <span v-if="product.is_new" class="badge badge-new">NEW</span>
+          <span v-if="salePercentage" class="badge badge-sale">-{{ salePercentage }}%</span>
+        </div>
       </router-link>
+      
+      <!-- Favorite Button -->
       <button 
         class="favorite-button"
         :class="{ 'active': isFavorite }"
         @click.stop.prevent="toggleFavorite"
         :disabled="isToggling"
+        type="button"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="heart-icon">
+        <svg 
+          xmlns="http://www.w3.org/2000/svg" 
+          width="20" 
+          height="20" 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          stroke="currentColor" 
+          stroke-width="2" 
+          stroke-linecap="round" 
+          stroke-linejoin="round" 
+          class="heart-icon"
+        >
           <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"></path>
+        </svg>
+      </button>
+      
+      <!-- Cart Button -->
+      <button 
+        class="cart-button"
+        @click.stop.prevent="addToCart"
+        type="button"
+        title="Добавить в корзину"
+      >
+        <svg 
+          xmlns="http://www.w3.org/2000/svg" 
+          width="20" 
+          height="20" 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          stroke="currentColor" 
+          stroke-width="2" 
+          stroke-linecap="round" 
+          stroke-linejoin="round"
+        >
+          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <path d="M16 10a4 4 0 0 1-8 0"></path>
         </svg>
       </button>
     </div>
     
+    <!-- Product Info -->
     <div class="product-info">
       <router-link :to="`/products/${product.slug}`" class="product-title">
         {{ product.title }}
@@ -118,6 +164,16 @@ const toggleFavorite = async () => {
   console.log('=== TOGGLE FAVORITE END ===');
 };
 
+const addToCart = () => {
+  console.log('Add to cart:', {
+    product: props.product.title,
+    id: props.product.id
+  });
+  
+  // Add your cart logic here
+  // Example: cartStore.addToCart(props.product);
+};
+
 const formatPrice = (price) => {
   return `${price} ₽`;
 };
@@ -125,58 +181,88 @@ const formatPrice = (price) => {
 
 <style scoped>
 .product-card {
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  height: 100%;
   display: flex;
   flex-direction: column;
   margin-bottom: 1.5rem;
 }
 
+.product-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
 .product-image-container {
   position: relative;
   width: 100%;
-  padding-top: 133%; /* 3:4 aspect ratio */
+  aspect-ratio: 3/4;
   overflow: hidden;
+  background: #f8f9fa;
   margin-bottom: 0.5rem;
 }
 
+.product-link {
+  display: block;
+  width: 100%;
+  height: 100%;
+  text-decoration: none;
+  color: inherit;
+}
+
+.product-image-wrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
 .product-image {
-  position: absolute;
-  top: 0;
-  left: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
   transition: transform 0.3s ease;
 }
 
-.product-image-container:hover .product-image {
+.product-card:hover .product-image {
   transform: scale(1.05);
 }
 
-.product-badge {
+.product-badges {
   position: absolute;
   top: 10px;
   left: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 2;
+}
+
+.badge {
   padding: 4px 8px;
   font-size: 0.75rem;
   font-weight: 500;
   text-transform: uppercase;
+  border-radius: 2px;
+  line-height: 1.2;
 }
 
-.product-badge.new {
+.badge-new {
   background-color: #000;
   color: #fff;
 }
 
-.product-badge.sale {
+.badge-sale {
   background-color: #ff4b4b;
   color: #fff;
 }
 
-.favorite-button {
+.favorite-button,
+.cart-button {
   position: absolute;
-  top: 10px;
-  right: 10px;
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.9);
   border: none;
   border-radius: 50%;
   width: 36px;
@@ -186,11 +272,24 @@ const formatPrice = (price) => {
   justify-content: center;
   cursor: pointer;
   transition: all 0.3s ease;
+  color: #6c757d;
   z-index: 10;
 }
 
-.favorite-button:hover {
+.favorite-button {
+  top: 10px;
+  right: 10px;
+}
+
+.cart-button {
+  top: 10px;
+  right: 56px;
+}
+
+.favorite-button:hover,
+.cart-button:hover {
   background: #fff;
+  color: #000;
   transform: scale(1.1);
 }
 
@@ -202,6 +301,7 @@ const formatPrice = (price) => {
 
 .favorite-button.active {
   background: rgba(255, 75, 75, 0.1);
+  color: #ff4b4b;
 }
 
 .favorite-button.active .heart-icon {
@@ -221,16 +321,24 @@ const formatPrice = (price) => {
 }
 
 .product-info {
+  padding: 12px;
+  flex-grow: 1;
   display: flex;
   flex-direction: column;
+  gap: 8px;
 }
 
 .product-title {
   color: #000;
   text-decoration: none;
   font-size: 0.875rem;
+  line-height: 1.3;
+  font-weight: 500;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
   margin-bottom: 0.25rem;
-  line-height: 1.2;
 }
 
 .product-title:hover {
@@ -241,6 +349,7 @@ const formatPrice = (price) => {
   display: flex;
   gap: 0.5rem;
   align-items: center;
+  margin-top: auto;
 }
 
 .sale-price {
@@ -257,9 +366,28 @@ const formatPrice = (price) => {
   color: #999;
 }
 
-@media (min-width: 768px) {
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .product-card {
+    border-radius: 6px;
+  }
+  
+  .product-info {
+    padding: 10px;
+  }
+  
   .product-title {
     font-size: 1rem;
+  }
+  
+  .favorite-button,
+  .cart-button {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .cart-button {
+    right: 48px;
   }
 }
 </style>
