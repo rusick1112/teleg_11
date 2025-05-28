@@ -60,10 +60,20 @@ class SizeSerializer(serializers.ModelSerializer):
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField()
+    
     class Meta:
         model = ProductImage
-        fields = ['id', 'image', 'alt_text', 'sort_order']
+        fields = ['id', 'image', 'image_url', 'alt_text', 'sort_order']
         read_only_fields = ['id']
+    
+    def get_image_url(self, obj):
+        if obj.image:
+            request = self.context.get('request')
+            if request is not None:
+                return request.build_absolute_uri(obj.image.url)
+            return obj.image.url
+        return None
 
 
 class ProductStockSerializer(serializers.ModelSerializer):
@@ -98,18 +108,34 @@ class ProductVariantSerializer(serializers.ModelSerializer):
 
 class ProductListSerializer(serializers.ModelSerializer):
     main_image_url = serializers.SerializerMethodField()
+    variants = ProductVariantSerializer(many=True, read_only=True)
     
     class Meta:
         model = Product
         fields = [
             'id', 'title', 'slug', 'article', 'price', 
-            'sale_price', 'main_image_url', 'is_available'
+            'sale_price', 'main_image_url', 'is_available',
+            'variants', 'created_at'
         ]
-        read_only_fields = ['id', 'slug']
+        read_only_fields = ['id', 'slug', 'created_at']
     
     def get_main_image_url(self, obj):
-        if obj.main_image and hasattr(obj.main_image, 'image'):
-            return obj.main_image.image.url
+        # Try to get the default variant first
+        default_variant = obj.variants.filter(is_default=True).first()
+        
+        # If no default variant, get the first variant
+        if not default_variant:
+            default_variant = obj.variants.first()
+        
+        # If we have a variant, get its first image
+        if default_variant:
+            first_image = default_variant.images.order_by('sort_order').first()
+            if first_image and first_image.image:
+                request = self.context.get('request')
+                if request is not None:
+                    return request.build_absolute_uri(first_image.image.url)
+                return first_image.image.url
+        
         return None
 
 
@@ -177,13 +203,23 @@ class CartItemSerializer(serializers.ModelSerializer):
         variant = obj.product_stock.variant
         size = obj.product_stock.size
         
+        # Get the first image of the variant
+        first_image = variant.images.order_by('sort_order').first()
+        image_url = None
+        if first_image and first_image.image:
+            request = self.context.get('request')
+            if request is not None:
+                image_url = request.build_absolute_uri(first_image.image.url)
+            else:
+                image_url = first_image.image.url
+        
         return {
             'product_id': product.id,
             'title': product.title,
             'price': float(product.sale_price if product.sale_price else product.price),
             'color': variant.color.name,
             'size': size.name,
-            'image': variant.images.first().image.url if variant.images.exists() else None,
+            'image': image_url,
             'total_price': float(obj.get_total_price())
         }
 

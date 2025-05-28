@@ -2,12 +2,12 @@ from rest_framework import viewsets, permissions, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
-from django.db.models import Q
+from django.db.models import Q, Prefetch
 from django_filters.rest_framework import DjangoFilterBackend
 
 from .models import (
     CustomerProfile, Category, Product, Color, Size,
-    ProductVariant, ProductStock, Favorite, Cart, CartItem, Order
+    ProductVariant, ProductStock, ProductImage, Favorite, Cart, CartItem, Order
 )
 from .serializers import (
     CustomerProfileSerializer, CategorySerializer, ProductListSerializer, 
@@ -75,6 +75,16 @@ class CustomerProfileViewSet(viewsets.ModelViewSet):
     def update_me(self, request):
         """Update current user's profile"""
         profile = self.get_object()
+        
+        # Update user fields if provided
+        user = request.user
+        if 'first_name' in request.data:
+            user.first_name = request.data['first_name']
+        if 'last_name' in request.data:
+            user.last_name = request.data.get('last_name', '')
+        user.save()
+        
+        # Update profile fields
         serializer = self.get_serializer(profile, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -123,57 +133,82 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Product.objects.filter(is_available=True).order_by('-created_at')
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['categories', 'categories__gender']
     search_fields = ['title', 'description', 'article']
     ordering_fields = ['price', 'created_at', 'title']
     ordering = ['-created_at']
     
+    def get_queryset(self):
+        # Optimize queries with prefetch_related
+        queryset = Product.objects.filter(is_available=True)
+        
+        # Prefetch variants with their images and stocks
+        variants_prefetch = Prefetch(
+            'variants',
+            queryset=ProductVariant.objects.prefetch_related(
+                Prefetch(
+                    'images',
+                    queryset=ProductImage.objects.order_by('sort_order')
+                ),
+                'stocks__size',
+                'color'
+            )
+        )
+        
+        return queryset.prefetch_related(
+            variants_prefetch,
+            'categories'
+        ).order_by('-created_at')
+    
     def get_serializer_class(self):
         if self.action == 'list':
             return ProductListSerializer
         return ProductDetailSerializer
     
+    def get_serializer_context(self):
+        """Add request to serializer context"""
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+    
     @action(detail=False, methods=['get'])
     def boys(self, request):
         """Фильтр для товаров для мальчиков"""
         boy_categories = Category.objects.filter(Q(gender='B') | Q(gender='U'))
-        products = Product.objects.filter(
-            categories__in=boy_categories, 
-            is_available=True
-        ).distinct().order_by('-created_at')
+        products = self.get_queryset().filter(
+            categories__in=boy_categories
+        ).distinct()
         
         page = self.paginate_queryset(products)
         if page is not None:
-            serializer = ProductListSerializer(page, many=True)
+            serializer = ProductListSerializer(page, many=True, context={'request': request})
             return self.get_paginated_response(serializer.data)
         
-        serializer = ProductListSerializer(products, many=True)
+        serializer = ProductListSerializer(products, many=True, context={'request': request})
         return Response(serializer.data)
     
     @action(detail=False, methods=['get'])
     def girls(self, request):
         """Фильтр для товаров для девочек"""
         girl_categories = Category.objects.filter(Q(gender='G') | Q(gender='U'))
-        products = Product.objects.filter(
-            categories__in=girl_categories, 
-            is_available=True
-        ).distinct().order_by('-created_at')
+        products = self.get_queryset().filter(
+            categories__in=girl_categories
+        ).distinct()
         
         page = self.paginate_queryset(products)
         if page is not None:
-            serializer = ProductListSerializer(page, many=True)
+            serializer = ProductListSerializer(page, many=True, context={'request': request})
             return self.get_paginated_response(serializer.data)
         
-        serializer = ProductListSerializer(products, many=True)
+        serializer = ProductListSerializer(products, many=True, context={'request': request})
         return Response(serializer.data)
     
     @action(detail=True, methods=['get'])
     def variants(self, request, pk=None):
         product = self.get_object()
         variants = product.variants.all().order_by('id')
-        serializer = ProductVariantSerializer(variants, many=True)
+        serializer = ProductVariantSerializer(variants, many=True, context={'request': request})
         return Response(serializer.data)
 
 
@@ -193,6 +228,11 @@ class FavoriteViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         return Favorite.objects.filter(user=self.request.user).order_by('-added_at')
+    
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
     
     @action(detail=False, methods=['post'])
     def toggle(self, request):
@@ -227,6 +267,11 @@ class CartViewSet(viewsets.ModelViewSet):
             session_id = self.request.session.session_key
         
         return Cart.objects.filter(session_id=session_id).order_by('-updated_at')
+    
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
     
     def get_object(self):
         queryset = self.get_queryset()
@@ -300,6 +345,11 @@ class CartItemViewSet(viewsets.ModelViewSet):
         cart = self.get_cart()
         return CartItem.objects.filter(cart=cart).order_by('-added_at')
     
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+    
     def get_cart(self):
         if self.request.user.is_authenticated:
             cart, created = Cart.objects.get_or_create(user=self.request.user)
@@ -353,6 +403,11 @@ class OrderViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         return Order.objects.filter(user=self.request.user).order_by('-created_at')
+    
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
     
     def create(self, request, *args, **kwargs):
         # Получение текущей корзины
